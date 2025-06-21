@@ -1,34 +1,34 @@
-const http = require('http');
-const WebSocket = require('ws');
+const http = require("http");
+const express = require("express");
+const { WebSocketServer } = require("ws");
+const net = require("net");
 
-// Create a basic HTTP server (Render requires this to expose the WebSocket server)
-const server = http.createServer((req, res) => {
-  res.writeHead(200);
-  res.end("Eaglercraft WebSocket Proxy is running.");
+const app = express();
+const server = http.createServer(app);
+const wss = new WebSocketServer({ noServer: true });
+
+// Where to forward connections (your actual Minecraft server)
+const MINECRAFT_HOST = "mc1716430.fmcs.cloud";
+const MINECRAFT_PORT = 25565;
+
+server.on("upgrade", function upgrade(request, socket, head) {
+  wss.handleUpgrade(request, socket, head, function done(ws) {
+    const mcSocket = net.connect(MINECRAFT_PORT, MINECRAFT_HOST, () => {
+      ws.on("message", (msg) => mcSocket.write(msg));
+      mcSocket.on("data", (chunk) => ws.send(chunk));
+    });
+
+    ws.on("close", () => mcSocket.end());
+    mcSocket.on("close", () => ws.close());
+    mcSocket.on("error", () => ws.close());
+  });
 });
 
-// Create the WebSocket server, attached to the HTTP server
-const wss = new WebSocket.Server({ server });
-
-wss.on('connection', (ws, req) => {
-  console.log('🟢 New WebSocket connection from:', req.socket.remoteAddress);
-
-  // Example: echo messages back
-  ws.on('message', (message) => {
-    console.log('📨 Received message:', message.toString());
-    // You can route the message to a Minecraft server if you build that logic
-    ws.send(message); // Echo it back for now
-  });
-
-  ws.on('close', () => {
-    console.log('🔴 WebSocket connection closed');
-  });
-
-  ws.send('✅ Connected to Eaglercraft WebSocket Proxy');
+app.get("/", (req, res) => {
+  res.status(200).send("🟢 WebSocket proxy running");
 });
 
-// Start the server on the port provided by Render
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => {
-  console.log(`🚀 WebSocket proxy listening on port ${PORT}`);
+  console.log(`✅ Proxy running on port ${PORT}`);
 });
