@@ -5,7 +5,7 @@ const net = require('net');
 
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocket.Server({ port:10000 });
 
 wss.on('connection', function connection(ws, req) {
   const minecraft = net.connect({ host: 'mc1716430.fmcs.cloud', port: 25565 });
