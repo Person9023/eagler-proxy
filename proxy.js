@@ -23,5 +23,5 @@ wss.on('connection', function connection(ws, req) {
 });
 
 server.listen(process.env.PORT || 10000, () => {
-  console.log('WebSocket proxy listening on port 10000');
+  console.log('WebSocket proxy listening on port ${PORT}');
 });
